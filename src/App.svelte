@@ -71,8 +71,8 @@
     <div id="hello" use:nowPlaying>
         <img id="logo" alt="album logo" src={logo}>
         <div class="trackName">
-            <p>{trackName} <span class="grayer trackLabel">{label}</span>
-            <p class="gray artist">{artistName}</p>
+            <p>{trackName}
+            <p class="gray artist">{artistName} <span class="grayer trackLabel">{label}</span></p>
         </div>
     </div>
 </header>
