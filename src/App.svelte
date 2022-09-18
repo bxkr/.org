@@ -4,25 +4,49 @@
 
     const requestUrl = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=blaxkr&api_key=dbb1697f637c3c4f0af4fc7a4e4628f3&format=json';
     const medias = [
-        { name: 'github', link: 'https://github.com/bxkr' },
-        { name: 'telegram', link: 'https://t.me/qikel' },
-        { name: 'lastfm', link: 'https://last.fm/user/blaxkr' },
-        { name: 'vk', link: 'https://vk.com/qikel' },
-        { name: 'ph', link: 'https://vk.com/aedmd'}
+        {name: 'github', link: 'https://github.com/bxkr'},
+        {name: 'telegram', link: 'https://t.me/qikel'},
+        {name: 'lastfm', link: 'https://last.fm/user/blaxkr'},
+        {name: 'vk', link: 'https://vk.com/qikel'},
+        {name: 'ph', link: 'https://vk.com/aedmd'}
     ];
     let trackName: string = "";
+    let artistName: string = "";
     let label: string = "hope here will be track name";
 
     function nowPlaying(): void {
         fetch(requestUrl, {headers: {'Content-Encoding': 'br',}}).then((response) => {
             response.json().then((jsonResponse: Tracks) => {
                 const zeroTrack = jsonResponse.recenttracks.track[0]
-                trackName = `${zeroTrack.artist["#text"]} - ${zeroTrack.name}`;
+                trackName = zeroTrack.name;
+                artistName = zeroTrack.artist["#text"];
                 (<HTMLImageElement>document.querySelector('#logo')).src = zeroTrack.image[zeroTrack.image.length - 1]["#text"]
                 if (zeroTrack["@attr"]) {
-                    label = "now listening to";
+                    label = "(now)";
                 } else {
-                    label = "last song listened to";
+                    const currentDate = new Date();
+                    const date = new Date(
+                        currentDate.getTime() + currentDate.getTimezoneOffset() * 60 -
+                        Number(zeroTrack["date"]["uts"]) * 1000
+                    );
+                    const minutes = Math.floor(date.getTime() / 1000 / 60);
+                    let ago = 0;
+                    let ago_word: string;
+                    if (minutes < 60) {
+                        ago = minutes;
+                        ago_word = 'minutes';
+                    } else if (minutes >= 60 && minutes < 1440) {
+                        ago = Math.floor(minutes / 60);
+                        ago_word = 'hours';
+                    } else if (minutes >= 1440) {
+                        ago = Math.floor(minutes / 1440)
+                        ago_word = 'days'
+                    }
+                    // plural check
+                    if (ago.toString().slice(-1) == '1' && ago.toString().slice(-2) != '11') {
+                        ago_word = ago_word.slice(0, -1)
+                    }
+                    label = `(${ago} ${ago_word} ago)`;
                 }
             });
         });
@@ -46,7 +70,10 @@
 <header on:click={() => toPage("https://last.fm/user/blaxkr")}>
     <div id="hello" use:nowPlaying>
         <img id="logo" alt="album logo" src={logo}>
-        <p>{trackName} <span class="gray">{label}</span></p>
+        <div class="trackName">
+            <p>{trackName} <span class="grayer trackLabel">{label}</span>
+            <p class="gray artist">{artistName}</p>
+        </div>
     </div>
 </header>
 
@@ -99,6 +126,10 @@
     color: gray;
   }
 
+  .grayer {
+    color: #333;
+  }
+
   header {
     height: $header-height;
   }
@@ -124,5 +155,28 @@
   #hello > p {
     text-align: start;
     margin: 0;
+  }
+
+  .artist {
+    font-size: small;
+  }
+
+  .trackName {
+    flex-direction: column;
+    height: 2em;
+  }
+
+  .trackName > p {
+    margin: 0;
+  }
+
+  .trackLabel {
+    visibility: hidden;
+  }
+
+  .trackName:hover {
+    .trackLabel {
+      visibility: visible;
+    }
   }
 </style>
